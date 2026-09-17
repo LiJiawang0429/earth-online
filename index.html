@@ -1967,7 +1967,11 @@ label {
   };
 
   // 启动
-  checkInit();
+  if (window.location.hash === '#demo') {
+    startDemo();
+  } else {
+    checkInit();
+  }
 })();
 </script>
 </body>
