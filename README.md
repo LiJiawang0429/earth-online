@@ -4,7 +4,9 @@
 
 > 单机运行，数据本地存储，用户自带 API Key。无后端、无服务器、无数据上传。
 
-![任务页截图](assets/screenshot-tasks.jpg)
+| 初始化配置 | 角色面板 | 设置与数据管理 |
+|:---:|:---:|:---:|
+| ![初始化配置](assets/screenshot-setup.jpg) | ![角色面板](assets/screenshot-character.jpg) | ![设置页](assets/screenshot-settings.jpg) |
 
 ## 功能特性
 
