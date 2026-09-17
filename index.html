@@ -1,0 +1,1974 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#070b14">
+<title>地球Online</title>
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=Share+Tech+Mono&display=swap">
+<style>
+/* ===== 设计变量 ===== */
+:root {
+  --bg-deep: #070b14;
+  --bg-panel: #0f1524;
+  --bg-card: #151c30;
+  --bg-card-hover: #1a2340;
+  --border: #232d4a;
+  --border-light: #2e3a5c;
+  --text-primary: #e8ecf4;
+  --text-secondary: #8892a8;
+  --text-muted: #5a6480;
+  --accent: #00e5a0;
+  --accent-dim: rgba(0, 229, 160, 0.15);
+  --accent-glow: rgba(0, 229, 160, 0.4);
+  --amber: #ffb347;
+  --amber-dim: rgba(255, 179, 71, 0.15);
+  --red: #ff6b6b;
+  --red-dim: rgba(255, 107, 107, 0.15);
+  --blue: #5b9cf6;
+  --blue-dim: rgba(91, 156, 246, 0.15);
+  --purple: #a78bfa;
+  --purple-dim: rgba(167, 139, 250, 0.15);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --font-body: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'Share Tech Mono', 'Courier New', monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(0, 229, 160, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(91, 156, 246, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ===== 顶部状态栏 ===== */
+.hud {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(7, 11, 20, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+}
+.hud-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.hud-avatar {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--blue));
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 16px; color: var(--bg-deep);
+  flex-shrink: 0;
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+.hud-info { flex: 1; min-width: 0; }
+.hud-name-row {
+  display: flex; align-items: baseline; gap: 8px;
+  margin-bottom: 4px;
+}
+.hud-name { font-weight: 700; font-size: 14px; }
+.hud-level {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  background: var(--accent-dim);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.hud-exp-bar {
+  height: 6px;
+  background: var(--bg-card);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.hud-exp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #00ffc8);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+.hud-exp-text {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.hud-weather {
+  text-align: right;
+  flex-shrink: 0;
+}
+.hud-weather-temp {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  color: var(--text-primary);
+}
+.hud-weather-desc {
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+/* ===== 底部导航 ===== */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(7, 11, 20, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+}
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 16px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: color 0.2s;
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+}
+.nav-item.active { color: var(--accent); }
+.nav-item svg { width: 22px; height: 22px; }
+.nav-item span { font-size: 10px; font-weight: 500; }
+
+/* ===== 主内容 ===== */
+.main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px 16px 100px;
+  position: relative;
+  z-index: 1;
+}
+.view { display: none; }
+.view.active { display: block; animation: fadeIn 0.3s ease; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== 通用组件 ===== */
+.section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+  font-family: var(--font-body);
+}
+.btn-primary {
+  background: var(--accent);
+  color: var(--bg-deep);
+  font-weight: 700;
+}
+.btn-primary:hover { background: #00ffc8; box-shadow: 0 0 16px var(--accent-glow); }
+.btn-primary:disabled { background: var(--border); color: var(--text-muted); cursor: not-allowed; box-shadow: none; }
+.btn-outline {
+  background: transparent;
+  border-color: var(--border-light);
+  color: var(--text-secondary);
+}
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+.btn-danger {
+  background: transparent;
+  border-color: var(--red);
+  color: var(--red);
+}
+.btn-danger:hover { background: var(--red-dim); }
+.btn-block { width: 100%; }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.tag-accent { background: var(--accent-dim); color: var(--accent); }
+.tag-amber { background: var(--amber-dim); color: var(--amber); }
+.tag-red { background: var(--red-dim); color: var(--red); }
+.tag-blue { background: var(--blue-dim); color: var(--blue); }
+.tag-purple { background: var(--purple-dim); color: var(--purple); }
+.tag-gray { background: rgba(136, 146, 168, 0.15); color: var(--text-secondary); }
+
+input, textarea, select {
+  width: 100%;
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: var(--font-body);
+  transition: border-color 0.2s;
+}
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+input::placeholder, textarea::placeholder { color: var(--text-muted); }
+label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.form-group { margin-bottom: 16px; }
+.form-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; line-height: 1.5; }
+
+/* ===== 初始化页 ===== */
+.setup-container {
+  max-width: 480px;
+  margin: 40px auto;
+}
+.setup-logo {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.setup-logo h1 {
+  font-size: 28px;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--accent), var(--blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 8px;
+}
+.setup-logo p {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+.setup-step { margin-bottom: 24px; }
+.setup-step-num {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.api-key-row {
+  display: flex;
+  gap: 8px;
+}
+.api-key-row input { flex: 1; }
+.test-result {
+  font-size: 12px;
+  margin-top: 6px;
+  min-height: 18px;
+}
+.test-result.success { color: var(--accent); }
+.test-result.error { color: var(--red); }
+.test-result.loading { color: var(--amber); }
+
+/* ===== 任务页 ===== */
+.tasks-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.tasks-date {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.tasks-count {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.task-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.task-card:hover {
+  border-color: var(--border-light);
+  background: var(--bg-card-hover);
+  transform: translateY(-1px);
+}
+.task-card.completed {
+  opacity: 0.6;
+  border-color: var(--accent);
+}
+.task-card.completed .task-title { text-decoration: line-through; }
+.task-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+}
+.task-card.type-main::before { background: var(--accent); }
+.task-card.type-explore::before { background: var(--blue); }
+.task-card.type-random::before { background: var(--amber); }
+
+.task-type-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.task-type-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.type-main .task-type-label { color: var(--accent); }
+.type-explore .task-type-label { color: var(--blue); }
+.type-random .task-type-label { color: var(--amber); }
+
+.task-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+.task-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+.task-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.task-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+.task-meta-item svg { width: 12px; height: 12px; }
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+.empty-state svg {
+  width: 48px; height: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+.empty-state p { font-size: 14px; margin-bottom: 16px; }
+
+/* ===== 任务详情 ===== */
+.task-detail-header { margin-bottom: 20px; }
+.task-detail-title {
+  font-size: 22px;
+  font-weight: 900;
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+.task-detail-desc {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+.detail-section { margin-bottom: 20px; }
+.detail-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+.detail-criteria {
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+.reward-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 8px;
+}
+.reward-item {
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  text-align: center;
+}
+.reward-value {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.reward-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.reflection-area {
+  width: 100%;
+  min-height: 100px;
+  resize: vertical;
+  background: var(--bg-deep);
+}
+.reflection-tips {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+.action-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+.action-row .btn { flex: 1; }
+
+/* ===== 角色页 ===== */
+.character-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+.character-avatar-lg {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--blue));
+  display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 32px; color: var(--bg-deep);
+  border: 3px solid var(--accent);
+  box-shadow: 0 0 24px var(--accent-glow);
+  margin-bottom: 12px;
+}
+.character-name { font-size: 20px; font-weight: 900; }
+.character-title {
+  font-size: 13px;
+  color: var(--amber);
+  margin-top: 4px;
+}
+.character-level-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+.character-level {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--accent);
+}
+.character-exp-bar {
+  width: 200px;
+  height: 8px;
+  background: var(--bg-card);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.character-exp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #00ffc8);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.attributes-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.attribute-item {
+  text-align: center;
+  padding: 12px 4px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.attribute-icon {
+  width: 24px; height: 24px;
+  margin: 0 auto 6px;
+}
+.attribute-value {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+}
+.attribute-name {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.attr-physical .attribute-value { color: var(--red); }
+.attr-intellect .attribute-value { color: var(--blue); }
+.attr-charm .attribute-value { color: var(--purple); }
+.attr-courage .attribute-value { color: var(--amber); }
+.attr-creativity .attribute-value { color: var(--accent); }
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.stat-item {
+  text-align: center;
+  padding: 14px 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.stat-value {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.stat-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.achievements-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.achievement-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 12px;
+}
+.achievement-badge.locked { opacity: 0.4; }
+.achievement-badge svg { width: 14px; height: 14px; }
+
+/* ===== 时间线 ===== */
+.timeline {
+  position: relative;
+  padding-left: 24px;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 7px; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--border);
+}
+.timeline-item {
+  position: relative;
+  margin-bottom: 20px;
+}
+.timeline-dot {
+  position: absolute;
+  left: -24px;
+  top: 4px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--bg-deep);
+  border: 2px solid var(--accent);
+}
+.timeline-date {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.timeline-task-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.timeline-reflection {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-top: 6px;
+}
+.timeline-keywords {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+/* ===== 设置页 ===== */
+.settings-section { margin-bottom: 24px; }
+.settings-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+.settings-item:last-child { border-bottom: none; }
+.settings-label { font-size: 14px; flex-shrink: 0; }
+.settings-value {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  text-align: right;
+  word-break: break-all;
+}
+.api-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.api-status .dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+}
+.api-status.configured .dot { background: var(--accent); box-shadow: 0 0 6px var(--accent-glow); }
+.api-status.unconfigured .dot { background: var(--text-muted); }
+
+/* ===== 加载与提示 ===== */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(7, 11, 20, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  gap: 16px;
+}
+.loading-spinner {
+  width: 40px; height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.toast {
+  position: fixed;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  border: 1px solid var(--accent);
+  color: var(--text-primary);
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  z-index: 2000;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  animation: toastIn 0.3s ease;
+  max-width: 90vw;
+  text-align: center;
+}
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 480px) {
+  .attributes-grid { gap: 4px; }
+  .attribute-item { padding: 8px 2px; }
+  .attribute-value { font-size: 15px; }
+  .stats-row { gap: 6px; }
+  .stat-value { font-size: 20px; }
+  .hud { padding: 8px 12px; }
+  .main { padding: 12px 12px 90px; }
+  .setup-container { margin: 20px auto; }
+}
+</style>
+</head>
+<body>
+
+<!-- 顶部状态栏 -->
+<div class="hud" id="hud" style="display:none;">
+  <div class="hud-inner">
+    <div class="hud-avatar" id="hudAvatar">?</div>
+    <div class="hud-info">
+      <div class="hud-name-row">
+        <span class="hud-name" id="hudName">主角</span>
+        <span class="hud-level" id="hudLevel">LV.1</span>
+      </div>
+      <div class="hud-exp-bar">
+        <div class="hud-exp-fill" id="hudExpFill" style="width:0%"></div>
+      </div>
+      <div class="hud-exp-text" id="hudExpText">0 / 100 EXP</div>
+    </div>
+    <div class="hud-weather" id="hudWeather">
+      <div class="hud-weather-temp">--</div>
+      <div class="hud-weather-desc">天气未配置</div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- 初始化页 -->
+  <section class="view active" id="view-setup">
+    <div class="setup-container">
+      <div class="setup-logo">
+        <h1>地球Online</h1>
+        <p>把现实世界变成你的开放世界游戏</p>
+      </div>
+
+      <div class="setup-step">
+        <div class="setup-step-num">STEP 01 / 角色创建</div>
+        <div class="card">
+          <div class="form-group">
+            <label>主角名称</label>
+            <input type="text" id="setupNickname" placeholder="输入你的名字或代号" maxlength="12">
+          </div>
+          <div class="form-group">
+            <label>兴趣标签（用逗号分隔）</label>
+            <input type="text" id="setupInterests" placeholder="例如：摄影, 美食, 徒步, 阅读, 咖啡">
+          </div>
+          <div class="form-group">
+            <label>主线目标（1-3个，用逗号分隔）</label>
+            <input type="text" id="setupGoals" placeholder="例如：今年学会摄影, 读20本书, 探索城市隐藏角落">
+          </div>
+        </div>
+      </div>
+
+      <div class="setup-step">
+        <div class="setup-step-num">STEP 02 / API 密钥配置</div>
+        <div class="card">
+          <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;line-height:1.6;">
+            所有密钥仅存储在浏览器本地（localStorage），不会上传到任何服务器。LLM 为必填，天气和地图为可选，未配置时任务生成自动降级。
+          </p>
+
+          <div class="form-group">
+            <label>LLM API 地址（OpenAI 兼容格式）</label>
+            <input type="text" id="setupLlmBaseUrl" placeholder="https://api.openai.com/v1" value="https://api.openai.com/v1">
+            <div class="form-hint">支持 OpenAI / DeepSeek / 豆包 / 通义千问 / Moonshot 等任何 OpenAI 兼容接口</div>
+          </div>
+          <div class="form-group">
+            <label>LLM API Key</label>
+            <div class="api-key-row">
+              <input type="password" id="setupLlmKey" placeholder="sk-...">
+              <button class="btn btn-outline btn-sm" onclick="App.testLlm()">测试</button>
+            </div>
+            <div class="test-result" id="llmTestResult"></div>
+          </div>
+          <div class="form-group">
+            <label>模型名称</label>
+            <input type="text" id="setupLlmModel" placeholder="gpt-4o-mini" value="gpt-4o-mini">
+            <div class="form-hint">例如 gpt-4o-mini / deepseek-chat / doubao-1-5-pro-32k / moonshot-v1-8k</div>
+          </div>
+
+          <div style="border-top:1px solid var(--border);margin:16px 0;padding-top:16px;">
+            <div class="form-group">
+              <label>和风天气 API Key（可选）</label>
+              <input type="text" id="setupWeatherKey" placeholder="留空则不获取天气">
+              <div class="form-hint">在 dev.qweather.com 注册，免费版每日 1000 次调用</div>
+            </div>
+            <div class="form-group">
+              <label>高德地图 API Key（可选）</label>
+              <input type="text" id="setupMapKey" placeholder="留空则不获取周边POI">
+              <div class="form-hint">在 lbs.amap.com 注册，选择 Web服务 API 类型</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-block" onclick="App.completeSetup()" id="setupSubmitBtn">
+        进入地球Online
+      </button>
+      <div style="text-align:center;margin-top:12px;">
+        <button class="btn btn-outline btn-sm" onclick="App.startDemo()" style="background:none;border:none;color:var(--text-muted);text-decoration:underline;cursor:pointer;padding:4px 8px;">
+          没有 API Key？先体验演示模式
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 任务页 -->
+  <section class="view" id="view-tasks">
+    <div class="tasks-header">
+      <div class="tasks-date" id="tasksDate">--</div>
+      <div class="tasks-count" id="tasksCount">0/3 已完成</div>
+    </div>
+    <div id="tasksList"></div>
+    <div id="tasksEmpty" class="empty-state" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+      <p>今日任务尚未生成</p>
+      <button class="btn btn-primary" onclick="App.generateDailyTasks()">生成今日任务</button>
+    </div>
+    <div style="margin-top:20px;text-align:center;">
+      <button class="btn btn-outline btn-sm" onclick="App.regenerateTasks()" id="regenBtn" style="display:none;">
+        重新生成今日任务（每日1次）
+      </button>
+    </div>
+  </section>
+
+  <!-- 任务详情页 -->
+  <section class="view" id="view-task-detail">
+    <button class="btn btn-outline btn-sm" onclick="App.navigate('tasks')" style="margin-bottom:16px;">&larr; 返回任务列表</button>
+    <div id="taskDetailContent"></div>
+  </section>
+
+  <!-- 角色页 -->
+  <section class="view" id="view-character">
+    <div class="character-header">
+      <div class="character-avatar-lg" id="charAvatar">?</div>
+      <div class="character-name" id="charName">主角</div>
+      <div class="character-title" id="charTitle">初入世界的冒险者</div>
+      <div class="character-level-row">
+        <span class="character-level" id="charLevel">LV.1</span>
+        <div class="character-exp-bar">
+          <div class="character-exp-fill" id="charExpFill" style="width:0%"></div>
+        </div>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);margin-top:4px;" id="charExpText">0 / 100 EXP</div>
+    </div>
+    <div class="section-title">五维属性</div>
+    <div class="attributes-grid" id="attributesGrid"></div>
+    <div class="section-title">冒险统计</div>
+    <div class="stats-row" id="statsRow"></div>
+    <div class="section-title">成就徽章</div>
+    <div class="achievements-list" id="achievementsList"></div>
+  </section>
+
+  <!-- 时间线页 -->
+  <section class="view" id="view-timeline">
+    <div class="section-title">冒险日志</div>
+    <div id="timelineList"></div>
+    <div id="timelineEmpty" class="empty-state" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      <p>还没有冒险记录</p>
+      <p style="font-size:12px;">完成任务并记录感想后，这里会生成你的人生时间线</p>
+    </div>
+  </section>
+
+  <!-- 设置页 -->
+  <section class="view" id="view-settings">
+    <div class="settings-section">
+      <div class="section-title">API 配置</div>
+      <div class="card">
+        <div class="settings-item">
+          <div>
+            <div class="settings-label">LLM 服务</div>
+            <div class="settings-value" id="settingsLlmModel">--</div>
+          </div>
+          <div class="api-status configured" id="settingsLlmStatus"><span class="dot"></span>已配置</div>
+        </div>
+        <div class="settings-item">
+          <div>
+            <div class="settings-label">天气服务</div>
+            <div class="settings-value">和风天气</div>
+          </div>
+          <div class="api-status" id="settingsWeatherStatus"><span class="dot"></span>未配置</div>
+        </div>
+        <div class="settings-item">
+          <div>
+            <div class="settings-label">地图服务</div>
+            <div class="settings-value">高德地图</div>
+          </div>
+          <div class="api-status" id="settingsMapStatus"><span class="dot"></span>未配置</div>
+        </div>
+        <div style="margin-top:16px;">
+          <button class="btn btn-outline btn-sm btn-block" onclick="App.showApiEdit()">重新配置 API</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="section-title">角色信息</div>
+      <div class="card">
+        <div class="settings-item">
+          <div class="settings-label">主角名称</div>
+          <div class="settings-value" id="settingsNickname">--</div>
+        </div>
+        <div class="settings-item">
+          <div class="settings-label">兴趣标签</div>
+          <div class="settings-value" id="settingsInterests">--</div>
+        </div>
+        <div class="settings-item">
+          <div class="settings-label">主线目标</div>
+          <div class="settings-value" id="settingsGoals">--</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="section-title">数据管理</div>
+      <div class="card">
+        <button class="btn btn-outline btn-sm btn-block" style="margin-bottom:8px;" onclick="App.exportData()">导出所有数据（JSON）</button>
+        <button class="btn btn-danger btn-sm btn-block" onclick="App.clearAllData()">清除所有数据并重置</button>
+      </div>
+    </div>
+
+    <div style="text-align:center;padding:20px 0;color:var(--text-muted);font-size:11px;line-height:1.8;">
+      地球Online v0.1.0 MVP<br>
+      数据仅存储在本地浏览器 · 纯前端运行
+    </div>
+  </section>
+
+</div>
+
+<!-- 底部导航 -->
+<nav class="bottom-nav" id="bottomNav" style="display:none;">
+  <button class="nav-item active" data-view="tasks" onclick="App.navigate('tasks')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+    <span>任务</span>
+  </button>
+  <button class="nav-item" data-view="character" onclick="App.navigate('character')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span>角色</span>
+  </button>
+  <button class="nav-item" data-view="timeline" onclick="App.navigate('timeline')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    <span>日志</span>
+  </button>
+  <button class="nav-item" data-view="settings" onclick="App.navigate('settings')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    <span>设置</span>
+  </button>
+</nav>
+
+<!-- 加载遮罩 -->
+<div class="loading-overlay" id="loadingOverlay" style="display:none;">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loadingText">加载中...</div>
+</div>
+
+<script>
+/**
+ * 地球Online - 前端应用
+ * 纯前端单文件应用，所有数据存储在 localStorage
+ * 第三方 API 由用户自行配置 Key，浏览器端直接调用
+ */
+(function() {
+  'use strict';
+
+  // ===== 常量配置 =====
+  const CONFIG = {
+    STORAGE_KEY: 'earth_online_state_v1',
+    VERSION: '0.1.0',
+    EXP_BASE: 100,
+    EXP_GROWTH: 1.15,
+    REFLECTION_BONUS_EXP: 10,
+    TASK_TYPES: ['main', 'explore', 'random'],
+    DIFFICULTIES: ['easy', 'normal', 'challenge'],
+    WEATHER_API_BASE: 'https://devapi.qweather.com/v7/weather/now',
+    ACHIEVEMENTS: [
+      { id: 'first_step', name: '第一步', desc: '完成第一个任务' },
+      { id: 'ten_tasks', name: '冒险者', desc: '完成10个任务' },
+      { id: 'thirty_tasks', name: '探索达人', desc: '完成30个任务' },
+      { id: 'thinker', name: '思考者', desc: '记录5次感想' },
+      { id: 'weekly', name: '七日觉醒', desc: '连续7天完成任务' },
+      { id: 'level5', name: '渐入佳境', desc: '达到LV.5' },
+      { id: 'level10', name: '世界旅者', desc: '达到LV.10' },
+      { id: 'brave', name: '勇气可嘉', desc: '勇气属性达到20' },
+      { id: 'creative', name: '创意无限', desc: '创造力属性达到20' }
+    ]
+  };
+
+  // ===== 默认状态 =====
+  function getDefaultState() {
+    return {
+      profile: {
+        nickname: '',
+        interests: [],
+        mainGoals: [],
+        apiKeys: {
+          llm: { baseUrl: '', apiKey: '', model: '' },
+          weather: { apiKey: '' },
+          map: { apiKey: '' }
+        }
+      },
+      character: {
+        level: 1,
+        exp: 0,
+        attributes: { physical: 0, intellect: 0, charm: 0, courage: 0, creativity: 0 },
+        title: '初入世界的冒险者',
+        achievements: [],
+        totalTasksCompleted: 0,
+        totalReflections: 0,
+        streakDays: 0,
+        lastActiveDate: null
+      },
+      dailyTasks: {},
+      reflections: [],
+      weather: null,
+      location: null,
+      regenUsed: {},
+      version: CONFIG.VERSION
+    };
+  }
+
+  // ===== 状态管理 =====
+  let state = loadState();
+
+  function loadState() {
+    try {
+      const saved = localStorage.getItem(CONFIG.STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const def = getDefaultState();
+        return {
+          ...def,
+          ...parsed,
+          profile: { ...def.profile, ...parsed.profile, apiKeys: { ...def.profile.apiKeys, ...(parsed.profile?.apiKeys || {}) } },
+          character: { ...def.character, ...parsed.character, attributes: { ...def.character.attributes, ...(parsed.character?.attributes || {}) } }
+        };
+      }
+    } catch (e) {
+      console.error('[EarthOnline] 状态加载失败:', e);
+    }
+    return getDefaultState();
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      console.error('[EarthOnline] 状态保存失败:', e);
+      showToast('数据保存失败，可能是存储空间不足');
+    }
+  }
+
+  // ===== 工具函数 =====
+  function getTodayStr() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  function expForLevel(level) {
+    return Math.floor(CONFIG.EXP_BASE * Math.pow(CONFIG.EXP_GROWTH, level - 1));
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function showToast(msg) {
+    const existing = document.querySelector('.toast');
+    if (existing) existing.remove();
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(function() { toast.remove(); }, 3000);
+  }
+
+  function showLoading(text) {
+    document.getElementById('loadingText').textContent = text || '加载中...';
+    document.getElementById('loadingOverlay').style.display = 'flex';
+  }
+
+  function hideLoading() {
+    document.getElementById('loadingOverlay').style.display = 'none';
+  }
+
+  // ===== 路由 =====
+  function navigate(view) {
+    document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+    document.getElementById('view-' + view).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(function(n) {
+      n.classList.toggle('active', n.dataset.view === view);
+    });
+    if (view === 'tasks') renderTasks();
+    if (view === 'character') renderCharacter();
+    if (view === 'timeline') renderTimeline();
+    if (view === 'settings') renderSettings();
+    window.scrollTo(0, 0);
+  }
+
+  // ===== HUD 更新 =====
+  function updateHUD() {
+    const c = state.character;
+    const expNeeded = expForLevel(c.level);
+    const expPct = Math.min(100, (c.exp / expNeeded) * 100);
+
+    document.getElementById('hudAvatar').textContent = state.profile.nickname.charAt(0).toUpperCase();
+    document.getElementById('hudName').textContent = state.profile.nickname;
+    document.getElementById('hudLevel').textContent = 'LV.' + c.level;
+    document.getElementById('hudExpFill').style.width = expPct + '%';
+    document.getElementById('hudExpText').textContent = c.exp + ' / ' + expNeeded + ' EXP';
+  }
+
+  // ===== 天气 =====
+  function loadWeather() {
+    if (!state.profile.apiKeys.weather.apiKey) return;
+    if (!navigator.geolocation) {
+      document.getElementById('hudWeather').innerHTML = '<div class="hud-weather-desc">定位不可用</div>';
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(function(pos) {
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+      state.location = { lat: lat, lon: lon };
+      saveState();
+
+      fetch(CONFIG.WEATHER_API_BASE + '?location=' + lon + ',' + lat + '&key=' + state.profile.apiKeys.weather.apiKey)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.code === '200' && data.now) {
+            state.weather = { temp: data.now.temp, text: data.now.text };
+            saveState();
+            document.getElementById('hudWeather').innerHTML =
+              '<div class="hud-weather-temp">' + data.now.temp + '&deg;C</div>' +
+              '<div class="hud-weather-desc">' + data.now.text + '</div>';
+          }
+        })
+        .catch(function(e) { console.error('[EarthOnline] 天气获取失败:', e); });
+    }, function() {
+      document.getElementById('hudWeather').innerHTML = '<div class="hud-weather-desc">定位被拒绝</div>';
+    }, { timeout: 8000 });
+  }
+
+  // ===== LLM 调用封装 =====
+  // 处理不同服务商对 response_format 的兼容性差异
+  async function callLLm(messages, opts) {
+    opts = opts || {};
+    const llm = state.profile.apiKeys.llm;
+    const body = {
+      model: llm.model,
+      messages: messages,
+      temperature: opts.temperature != null ? opts.temperature : 0.7,
+      max_tokens: opts.maxTokens || 1000
+    };
+
+    // 先尝试带 response_format（OpenAI 原生支持）
+    try {
+      const resp = await fetch(llm.baseUrl + '/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + llm.apiKey },
+        body: JSON.stringify({ ...body, response_format: { type: 'json_object' } })
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        return data.choices[0].message.content;
+      }
+      // 400 通常是不支持 response_format，降级重试
+      if (resp.status === 400) {
+        console.warn('[EarthOnline] API 不支持 response_format，降级重试');
+      } else {
+        const errText = await resp.text();
+        throw new Error('API ' + resp.status + ': ' + errText.substring(0, 200));
+      }
+    } catch (e) {
+      if (e.message.includes('API ')) throw e;
+      // 网络错误也降级
+      console.warn('[EarthOnline] 带 response_format 请求失败，降级:', e.message);
+    }
+
+    // 降级：不带 response_format
+    const resp = await fetch(llm.baseUrl + '/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + llm.apiKey },
+      body: JSON.stringify(body)
+    });
+    if (!resp.ok) {
+      const errText = await resp.text();
+      throw new Error('API ' + resp.status + ': ' + errText.substring(0, 200));
+    }
+    const data = await resp.json();
+    return data.choices[0].message.content;
+  }
+
+  function parseJsonSafe(text) {
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      const match = text.match(/\{[\s\S]*\}/);
+      if (match) return JSON.parse(match[0]);
+      throw new Error('无法解析 JSON 响应');
+    }
+  }
+
+  // ===== 任务生成 Prompt =====
+  function buildTaskPrompt() {
+    const p = state.profile;
+    const today = new Date();
+    const weekday = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][today.getDay()];
+    const isWeekend = today.getDay() === 0 || today.getDay() === 6;
+    const c = state.character;
+
+    let ctx = '你是「地球Online」的AI任务生成器。地球Online是一款把现实世界变成开放世界游戏的应用，用户是主角。你的任务是为用户生成今天的3个专属任务，帮助用户打破重复生活（NPC循环），探索真实世界。\n\n';
+
+    ctx += '【用户画像】\n';
+    ctx += '名称：' + p.nickname + '\n';
+    if (p.interests.length) ctx += '兴趣：' + p.interests.join('、') + '\n';
+    if (p.mainGoals.length) ctx += '主线目标：' + p.mainGoals.join('；') + '\n';
+    ctx += '等级：LV.' + c.level + '\n';
+    ctx += '五维属性 - 体力:' + c.attributes.physical + ' 智力:' + c.attributes.intellect + ' 魅力:' + c.attributes.charm + ' 勇气:' + c.attributes.courage + ' 创造力:' + c.attributes.creativity + '\n\n';
+
+    ctx += '【今日世界状态】\n';
+    ctx += '日期：' + getTodayStr() + '（' + weekday + '）\n';
+    ctx += '时段：' + (isWeekend ? '周末（适合较长时间的探索任务）' : '工作日（任务应控制在较短时间内）') + '\n';
+    if (state.weather) {
+      ctx += '天气：' + state.weather.temp + '°C ' + state.weather.text + '\n';
+      if (parseInt(state.weather.temp) < 5) ctx += '天气寒冷，优先推荐室内任务\n';
+      if (state.weather.text.indexOf('雨') >= 0 || state.weather.text.indexOf('雪') >= 0) ctx += '当前有降水，优先推荐室内或短途任务\n';
+    }
+    if (state.location) {
+      ctx += '位置：已获取定位（' + state.location.lat.toFixed(2) + ', ' + state.location.lon.toFixed(2) + '）\n';
+    }
+    ctx += '\n';
+
+    const recent = getRecentTaskTitles(7);
+    if (recent.length) {
+      ctx += '【近期已完成任务（避免重复）】\n' + recent.join('、') + '\n\n';
+    }
+
+    ctx += '【生成规则】\n';
+    ctx += '1. 生成3个任务：1个主线任务（围绕用户目标或成长）、1个探索任务（探索周围世界/新体验）、1个随机任务（轻量有趣、打破常规，5-30分钟）\n';
+    ctx += '2. 每个任务必须具体可执行，有明确完成标准，禁止模糊描述\n';
+    ctx += '3. 任务必须与用户画像相关（至少引用一个兴趣或目标）\n';
+    ctx += '4. 工作日任务控制在30分钟以内，周末可放宽到半天\n';
+    ctx += '5. 探索任务优先推荐非热门、在地化、隐藏的体验（探坑），而非连锁品牌和热门景点\n';
+    ctx += '6. 随机任务要出人意料，鼓励打破日常惯例\n';
+    ctx += '7. 确保任务安全合法\n';
+    ctx += '8. 不要生成与近期已完成任务重复的内容\n\n';
+
+    ctx += '【输出格式】严格输出JSON：\n';
+    ctx += '{"tasks":[{"type":"main","title":"...","description":"...","completionCriteria":"...","estimatedMinutes":30,"difficulty":"normal","expReward":50,"attributeRewards":{"physical":0,"intellect":2,"charm":0,"courage":1,"creativity":2}},...]}\n';
+    ctx += 'difficulty: easy/normal/challenge；expReward: 主线50-150/探索30-80/随机10-30；attributeRewards总和建议3-8点';
+
+    return ctx;
+  }
+
+  function getRecentTaskTitles(days) {
+    const titles = [];
+    const today = new Date();
+    for (let i = 0; i < days; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      if (state.dailyTasks[key]) {
+        state.dailyTasks[key].forEach(function(t) {
+          if (t.status === 'completed') titles.push(t.title);
+        });
+      }
+    }
+    return titles.slice(0, 15);
+  }
+
+  // ===== 任务生成 =====
+  async function generateDailyTasks() {
+    const today = getTodayStr();
+    showLoading('AI 正在为你生成今日专属任务...');
+
+    try {
+      const content = await callLLm([
+        { role: 'system', content: '你是一个专业的游戏任务设计师，擅长设计具体、有趣、可执行的现实世界任务。只输出JSON。' },
+        { role: 'user', content: buildTaskPrompt() }
+      ], { temperature: 0.85, maxTokens: 2000 });
+
+      const parsed = parseJsonSafe(content);
+      if (!parsed.tasks || !Array.isArray(parsed.tasks) || parsed.tasks.length < 3) {
+        throw new Error('AI 返回的任务数量不足');
+      }
+
+      const typeMap = { 0: 'main', 1: 'explore', 2: 'random' };
+      const tasks = parsed.tasks.slice(0, 3).map(function(t, i) {
+        return {
+          id: today + '_' + i,
+          date: today,
+          type: t.type || typeMap[i],
+          title: t.title || '未命名任务',
+          description: t.description || '',
+          completionCriteria: t.completionCriteria || '',
+          estimatedMinutes: t.estimatedMinutes || 30,
+          difficulty: t.difficulty || 'normal',
+          expReward: t.expReward || 30,
+          attributeRewards: t.attributeRewards || { physical: 0, intellect: 1, charm: 0, courage: 0, creativity: 1 },
+          status: 'pending',
+          reflection: null
+        };
+      });
+
+      state.dailyTasks[today] = tasks;
+      saveState();
+      hideLoading();
+      renderTasks();
+      showToast('今日任务已生成！');
+    } catch (e) {
+      hideLoading();
+      console.error('[EarthOnline] 任务生成失败:', e);
+      showToast('任务生成失败: ' + e.message);
+    }
+  }
+
+  async function regenerateTasks() {
+    const today = getTodayStr();
+    if (state.regenUsed[today]) {
+      showToast('今日已使用过重新生成机会');
+      return;
+    }
+    state.regenUsed[today] = true;
+    saveState();
+    await generateDailyTasks();
+  }
+
+  // ===== 任务渲染 =====
+  function renderTasks() {
+    const today = getTodayStr();
+    const tasks = state.dailyTasks[today];
+    const listEl = document.getElementById('tasksList');
+    const emptyEl = document.getElementById('tasksEmpty');
+    const regenBtn = document.getElementById('regenBtn');
+
+    const d = new Date();
+    const weekday = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][d.getDay()];
+    document.getElementById('tasksDate').textContent = getTodayStr() + ' ' + weekday;
+
+    if (!tasks || tasks.length === 0) {
+      listEl.innerHTML = '';
+      emptyEl.style.display = 'block';
+      regenBtn.style.display = 'none';
+      document.getElementById('tasksCount').textContent = '0/3 已完成';
+      return;
+    }
+
+    emptyEl.style.display = 'none';
+    regenBtn.style.display = state.regenUsed[today] ? 'none' : 'inline-block';
+
+    const completed = tasks.filter(function(t) { return t.status === 'completed'; }).length;
+    document.getElementById('tasksCount').textContent = completed + '/' + tasks.length + ' 已完成';
+
+    const typeLabels = { main: '主线任务', explore: '探索任务', random: '随机任务' };
+    const typeTags = { main: 'tag-accent', explore: 'tag-blue', random: 'tag-amber' };
+    const diffLabels = { easy: '轻松', normal: '普通', challenge: '挑战' };
+
+    listEl.innerHTML = tasks.map(function(t) {
+      return '<div class="task-card type-' + t.type + ' ' + (t.status === 'completed' ? 'completed' : '') + '" onclick="App.openTaskDetail(\'' + t.id + '\')">' +
+        '<div class="task-type-row">' +
+          '<span class="task-type-label">' + (typeLabels[t.type] || t.type) + '</span>' +
+          '<span class="tag ' + (typeTags[t.type] || 'tag-gray') + '">' + (diffLabels[t.difficulty] || t.difficulty) + '</span>' +
+          (t.status === 'completed' ? '<span class="tag tag-accent">已完成</span>' : '') +
+        '</div>' +
+        '<div class="task-title">' + escapeHtml(t.title) + '</div>' +
+        '<div class="task-desc">' + escapeHtml(t.description) + '</div>' +
+        '<div class="task-meta">' +
+          '<span class="task-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>' + t.estimatedMinutes + '分钟</span>' +
+          '<span class="task-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>+' + t.expReward + ' EXP</span>' +
+          (t.reflection ? '<span class="task-meta-item" style="color:var(--accent);">已记录感想</span>' : '') +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // ===== 任务详情 =====
+  function openTaskDetail(taskId) {
+    const today = getTodayStr();
+    const tasks = state.dailyTasks[today] || [];
+    const task = tasks.find(function(t) { return t.id === taskId; });
+    if (!task) return;
+
+    const typeLabels = { main: '主线任务', explore: '探索任务', random: '随机任务' };
+    const typeTags = { main: 'tag-accent', explore: 'tag-blue', random: 'tag-amber' };
+    const diffLabels = { easy: '轻松', normal: '普通', challenge: '挑战' };
+    const attrNames = { physical: '体力', intellect: '智力', charm: '魅力', courage: '勇气', creativity: '创造力' };
+    const attrColors = { physical: 'var(--red)', intellect: 'var(--blue)', charm: 'var(--purple)', courage: 'var(--amber)', creativity: 'var(--accent)' };
+
+    let rewardsHtml = '<div class="reward-item"><div class="reward-value">+' + task.expReward + '</div><div class="reward-label">经验</div></div>';
+    Object.keys(task.attributeRewards).forEach(function(k) {
+      const v = task.attributeRewards[k];
+      if (v > 0) {
+        rewardsHtml += '<div class="reward-item"><div class="reward-value" style="color:' + attrColors[k] + '">+' + v + '</div><div class="reward-label">' + attrNames[k] + '</div></div>';
+      }
+    });
+
+    const isCompleted = task.status === 'completed';
+
+    let html = '<div class="task-detail-header">' +
+      '<div class="task-type-row" style="margin-bottom:12px;">' +
+        '<span class="tag ' + typeTags[task.type] + '">' + typeLabels[task.type] + '</span>' +
+        '<span class="tag tag-gray">' + diffLabels[task.difficulty] + '</span>' +
+        '<span class="tag tag-gray">' + task.estimatedMinutes + '分钟</span>' +
+        (isCompleted ? '<span class="tag tag-accent">已完成</span>' : '') +
+      '</div>' +
+      '<div class="task-detail-title">' + escapeHtml(task.title) + '</div>' +
+      '<div class="task-detail-desc">' + escapeHtml(task.description) + '</div>' +
+    '</div>' +
+    '<div class="detail-section"><div class="detail-label">完成标准</div><div class="detail-criteria">' + escapeHtml(task.completionCriteria) + '</div></div>' +
+    '<div class="detail-section"><div class="detail-label">完成奖励</div><div class="reward-grid">' + rewardsHtml + '</div></div>';
+
+    if (isCompleted) {
+      html += '<div class="detail-section"><div class="detail-label">我的感想</div>';
+      if (task.reflection) {
+        html += '<div class="detail-criteria" style="margin-bottom:8px;">' + escapeHtml(task.reflection.content) + '</div>';
+        if (task.reflection.aiKeywords && task.reflection.aiKeywords.length) {
+          html += '<div class="timeline-keywords">' + task.reflection.aiKeywords.map(function(k) {
+            return '<span class="tag tag-purple">' + escapeHtml(k) + '</span>';
+          }).join('') + '</div>';
+        }
+      } else {
+        html += '<p style="color:var(--text-muted);font-size:13px;">未记录感想</p>';
+      }
+      html += '</div>';
+    } else {
+      html += '<div class="detail-section"><div class="detail-label">记录感想（完成后填写）</div>' +
+        '<textarea class="reflection-area" id="reflectionInput" placeholder="做完这个任务后有什么感受？发现了什么？学到了什么？"></textarea>' +
+        '<div class="reflection-tips">记录感想会额外获得 ' + CONFIG.REFLECTION_BONUS_EXP + ' 经验，AI会帮你提炼成长关键词</div></div>' +
+        '<div class="action-row">' +
+          '<button class="btn btn-outline" onclick="App.navigate(\'tasks\')">稍后再做</button>' +
+          '<button class="btn btn-primary" onclick="App.completeTask(\'' + task.id + '\')">标记完成</button>' +
+        '</div>';
+    }
+
+    document.getElementById('taskDetailContent').innerHTML = html;
+    navigate('task-detail');
+  }
+
+  // ===== 完成任务 =====
+  async function completeTask(taskId) {
+    const today = getTodayStr();
+    const tasks = state.dailyTasks[today] || [];
+    const task = tasks.find(function(t) { return t.id === taskId; });
+    if (!task) return;
+
+    const input = document.getElementById('reflectionInput');
+    const reflectionContent = input ? input.value.trim() : '';
+
+    task.status = 'completed';
+    task.completedAt = Date.now();
+
+    let bonusExp = 0;
+    if (reflectionContent) {
+      task.reflection = { content: reflectionContent, createdAt: Date.now(), aiKeywords: [], aiMood: '' };
+      bonusExp = CONFIG.REFLECTION_BONUS_EXP;
+      state.character.totalReflections++;
+
+      // AI 分析感想（不阻塞主流程）
+      try {
+        showLoading('AI 正在分析你的感想...');
+        const content = await callLLm([
+          { role: 'system', content: '你是一个成长教练。根据用户的任务感想，提炼3-5个成长关键词，并判断情绪倾向。只输出JSON。' },
+          { role: 'user', content: '任务：' + task.title + '\n感想：' + reflectionContent + '\n\n输出格式：{"keywords":["关键词1","关键词2"],"mood":"情绪描述"}' }
+        ], { temperature: 0.5, maxTokens: 300 });
+
+        const parsed = parseJsonSafe(content);
+        if (parsed.keywords) {
+          task.reflection.aiKeywords = parsed.keywords;
+          task.reflection.aiMood = parsed.mood || '';
+        }
+        hideLoading();
+      } catch (e) {
+        hideLoading();
+        console.warn('[EarthOnline] 感想分析失败:', e.message);
+      }
+
+      state.reflections.push({
+        taskId: task.id,
+        taskTitle: task.title,
+        date: today,
+        content: reflectionContent,
+        keywords: task.reflection.aiKeywords
+      });
+    }
+
+    const totalExp = task.expReward + bonusExp;
+    addExp(totalExp);
+    Object.keys(task.attributeRewards).forEach(function(k) {
+      if (task.attributeRewards[k] > 0) state.character.attributes[k] += task.attributeRewards[k];
+    });
+
+    state.character.totalTasksCompleted++;
+    updateStreak();
+    checkAchievements();
+    saveState();
+    updateHUD();
+
+    showToast('任务完成！获得 ' + totalExp + ' 经验' + (bonusExp ? '（含感想奖励+' + bonusExp + '）' : ''));
+    openTaskDetail(taskId);
+  }
+
+  function addExp(amount) {
+    state.character.exp += amount;
+    let leveledUp = false;
+    while (state.character.exp >= expForLevel(state.character.level)) {
+      state.character.exp -= expForLevel(state.character.level);
+      state.character.level++;
+      leveledUp = true;
+    }
+    if (leveledUp) {
+      setTimeout(function() { showToast('升级了！当前 LV.' + state.character.level); }, 1500);
+    }
+  }
+
+  function updateStreak() {
+    const today = getTodayStr();
+    if (state.character.lastActiveDate === today) return;
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yStr = yesterday.getFullYear() + '-' + String(yesterday.getMonth() + 1).padStart(2, '0') + '-' + String(yesterday.getDate()).padStart(2, '0');
+    state.character.streakDays = (state.character.lastActiveDate === yStr) ? state.character.streakDays + 1 : 1;
+    state.character.lastActiveDate = today;
+  }
+
+  function checkAchievements() {
+    const c = state.character;
+    const checks = [
+      { id: 'first_step', cond: c.totalTasksCompleted >= 1 },
+      { id: 'ten_tasks', cond: c.totalTasksCompleted >= 10 },
+      { id: 'thirty_tasks', cond: c.totalTasksCompleted >= 30 },
+      { id: 'thinker', cond: c.totalReflections >= 5 },
+      { id: 'weekly', cond: c.streakDays >= 7 },
+      { id: 'level5', cond: c.level >= 5 },
+      { id: 'level10', cond: c.level >= 10 },
+      { id: 'brave', cond: c.attributes.courage >= 20 },
+      { id: 'creative', cond: c.attributes.creativity >= 20 }
+    ];
+    checks.forEach(function(check) {
+      if (check.cond && c.achievements.indexOf(check.id) < 0) {
+        c.achievements.push(check.id);
+        const ach = CONFIG.ACHIEVEMENTS.find(function(a) { return a.id === check.id; });
+        if (ach) setTimeout(function() { showToast('解锁成就：' + ach.name + '！'); }, 2000);
+      }
+    });
+  }
+
+  // ===== 角色页渲染 =====
+  function renderCharacter() {
+    const c = state.character;
+    const expNeeded = expForLevel(c.level);
+    const expPct = Math.min(100, (c.exp / expNeeded) * 100);
+
+    document.getElementById('charAvatar').textContent = state.profile.nickname.charAt(0).toUpperCase();
+    document.getElementById('charName').textContent = state.profile.nickname;
+    document.getElementById('charTitle').textContent = c.title;
+    document.getElementById('charLevel').textContent = 'LV.' + c.level;
+    document.getElementById('charExpFill').style.width = expPct + '%';
+    document.getElementById('charExpText').textContent = c.exp + ' / ' + expNeeded + ' EXP';
+
+    const attrs = [
+      { key: 'physical', name: '体力', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><path d="M6.5 6.5L12 2l5.5 4.5v5L12 22l-5.5-10.5v-5z"/></svg>' },
+      { key: 'intellect', name: '智力', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0112 4.5v15a2.5 2.5 0 01-4.96.44 2.5 2.5 0 01-2.96-3.08 3 3 0 01-.34-5.58 2.5 2.5 0 011.32-4.24 2.5 2.5 0 011.98-3A2.5 2.5 0 019.5 2z"/><path d="M14.5 2A2.5 2.5 0 0012 4.5v15a2.5 2.5 0 004.96.44 2.5 2.5 0 002.96-3.08 3 3 0 00.34-5.58 2.5 2.5 0 00-1.32-4.24 2.5 2.5 0 00-1.98-3A2.5 2.5 0 0014.5 2z"/></svg>' },
+      { key: 'charm', name: '魅力', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>' },
+      { key: 'courage', name: '勇气', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' },
+      { key: 'creativity', name: '创造力', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 10v6m11-11h-6m-10 0H1"/></svg>' }
+    ];
+
+    document.getElementById('attributesGrid').innerHTML = attrs.map(function(a) {
+      return '<div class="attribute-item attr-' + a.key + '">' +
+        '<div class="attribute-icon">' + a.icon + '</div>' +
+        '<div class="attribute-value">' + c.attributes[a.key] + '</div>' +
+        '<div class="attribute-name">' + a.name + '</div></div>';
+    }).join('');
+
+    document.getElementById('statsRow').innerHTML =
+      '<div class="stat-item"><div class="stat-value">' + c.totalTasksCompleted + '</div><div class="stat-label">完成任务</div></div>' +
+      '<div class="stat-item"><div class="stat-value">' + c.totalReflections + '</div><div class="stat-label">感想记录</div></div>' +
+      '<div class="stat-item"><div class="stat-value">' + c.streakDays + '</div><div class="stat-label">连续天数</div></div>';
+
+    document.getElementById('achievementsList').innerHTML = CONFIG.ACHIEVEMENTS.map(function(a) {
+      const unlocked = c.achievements.indexOf(a.id) >= 0;
+      return '<div class="achievement-badge ' + (unlocked ? '' : 'locked') + '" title="' + a.desc + '">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="' + (unlocked ? 'var(--amber)' : 'currentColor') + '" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>' +
+        escapeHtml(a.name) + '</div>';
+    }).join('');
+  }
+
+  // ===== 时间线渲染 =====
+  function renderTimeline() {
+    const listEl = document.getElementById('timelineList');
+    const emptyEl = document.getElementById('timelineEmpty');
+
+    const items = [];
+    Object.keys(state.dailyTasks).forEach(function(date) {
+      state.dailyTasks[date].forEach(function(t) {
+        if (t.status === 'completed') {
+          items.push({ date: date, title: t.title, type: t.type, reflection: t.reflection });
+        }
+      });
+    });
+    items.sort(function(a, b) { return b.date.localeCompare(a.date); });
+
+    if (items.length === 0) {
+      listEl.innerHTML = '';
+      emptyEl.style.display = 'block';
+      return;
+    }
+    emptyEl.style.display = 'none';
+
+    const typeColors = { main: 'var(--accent)', explore: 'var(--blue)', random: 'var(--amber)' };
+
+    listEl.innerHTML = items.map(function(item) {
+      let html = '<div class="timeline-item">' +
+        '<div class="timeline-dot" style="border-color:' + (typeColors[item.type] || 'var(--accent)') + '"></div>' +
+        '<div class="timeline-date">' + item.date + '</div>' +
+        '<div class="timeline-task-title">' + escapeHtml(item.title) + '</div>';
+      if (item.reflection) {
+        html += '<div class="timeline-reflection">' + escapeHtml(item.reflection.content) + '</div>';
+        if (item.reflection.aiKeywords && item.reflection.aiKeywords.length) {
+          html += '<div class="timeline-keywords">' + item.reflection.aiKeywords.map(function(k) {
+            return '<span class="tag tag-purple">' + escapeHtml(k) + '</span>';
+          }).join('') + '</div>';
+        }
+      }
+      html += '</div>';
+      return html;
+    }).join('');
+  }
+
+  // ===== 设置页渲染 =====
+  function renderSettings() {
+    const p = state.profile;
+    document.getElementById('settingsNickname').textContent = p.nickname;
+    document.getElementById('settingsInterests').textContent = p.interests.length ? p.interests.join('、') : '未设置';
+    document.getElementById('settingsGoals').textContent = p.mainGoals.length ? p.mainGoals.join('；') : '未设置';
+    document.getElementById('settingsLlmModel').textContent = p.apiKeys.llm.model || '--';
+
+    function setStatus(id, configured) {
+      const el = document.getElementById(id);
+      el.className = 'api-status ' + (configured ? 'configured' : 'unconfigured');
+      el.innerHTML = '<span class="dot"></span>' + (configured ? '已配置' : '未配置');
+    }
+    setStatus('settingsLlmStatus', !!p.apiKeys.llm.apiKey);
+    setStatus('settingsWeatherStatus', !!p.apiKeys.weather.apiKey);
+    setStatus('settingsMapStatus', !!p.apiKeys.map.apiKey);
+  }
+
+  // ===== 初始化流程 =====
+  function completeSetup() {
+    const nickname = document.getElementById('setupNickname').value.trim();
+    const interests = document.getElementById('setupInterests').value.split(/[,，]/).map(function(s) { return s.trim(); }).filter(Boolean);
+    const goals = document.getElementById('setupGoals').value.split(/[,，]/).map(function(s) { return s.trim(); }).filter(Boolean);
+    const llmBaseUrl = document.getElementById('setupLlmBaseUrl').value.trim();
+    const llmKey = document.getElementById('setupLlmKey').value.trim();
+    const llmModel = document.getElementById('setupLlmModel').value.trim();
+    const weatherKey = document.getElementById('setupWeatherKey').value.trim();
+    const mapKey = document.getElementById('setupMapKey').value.trim();
+
+    if (!nickname) { showToast('请输入主角名称'); return; }
+    if (!llmKey) { showToast('请配置 LLM API Key'); return; }
+    if (!llmBaseUrl) { showToast('请配置 LLM API 地址'); return; }
+    if (!llmModel) { showToast('请配置模型名称'); return; }
+
+    state.profile.nickname = nickname;
+    state.profile.interests = interests;
+    state.profile.mainGoals = goals;
+    state.profile.apiKeys.llm = { baseUrl: llmBaseUrl, apiKey: llmKey, model: llmModel };
+    state.profile.apiKeys.weather = { apiKey: weatherKey };
+    state.profile.apiKeys.map = { apiKey: mapKey };
+    saveState();
+
+    document.getElementById('view-setup').classList.remove('active');
+    document.getElementById('hud').style.display = 'block';
+    document.getElementById('bottomNav').style.display = 'flex';
+    updateHUD();
+    loadWeather();
+    navigate('tasks');
+    showToast('欢迎来到地球Online，' + nickname + '！');
+  }
+
+  async function testLlm() {
+    const baseUrl = document.getElementById('setupLlmBaseUrl').value.trim();
+    const apiKey = document.getElementById('setupLlmKey').value.trim();
+    const model = document.getElementById('setupLlmModel').value.trim();
+    const resultEl = document.getElementById('llmTestResult');
+
+    if (!apiKey) { resultEl.className = 'test-result error'; resultEl.textContent = '请先填写 API Key'; return; }
+
+    resultEl.className = 'test-result loading';
+    resultEl.textContent = '正在测试连接...';
+
+    try {
+      const resp = await fetch(baseUrl + '/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+        body: JSON.stringify({ model: model, messages: [{ role: 'user', content: 'ping' }], max_tokens: 5 })
+      });
+      if (resp.ok) {
+        resultEl.className = 'test-result success';
+        resultEl.textContent = '连接成功！模型可用。';
+      } else {
+        const err = await resp.text();
+        resultEl.className = 'test-result error';
+        resultEl.textContent = '连接失败: ' + resp.status + ' ' + err.substring(0, 100);
+      }
+    } catch (e) {
+      resultEl.className = 'test-result error';
+      resultEl.textContent = '连接失败: ' + e.message;
+    }
+  }
+
+  function showApiEdit() {
+    document.getElementById('setupNickname').value = state.profile.nickname;
+    document.getElementById('setupInterests').value = state.profile.interests.join(', ');
+    document.getElementById('setupGoals').value = state.profile.mainGoals.join(', ');
+    document.getElementById('setupLlmBaseUrl').value = state.profile.apiKeys.llm.baseUrl;
+    document.getElementById('setupLlmKey').value = state.profile.apiKeys.llm.apiKey;
+    document.getElementById('setupLlmModel').value = state.profile.apiKeys.llm.model;
+    document.getElementById('setupWeatherKey').value = state.profile.apiKeys.weather.apiKey;
+    document.getElementById('setupMapKey').value = state.profile.apiKeys.map.apiKey;
+    document.getElementById('setupSubmitBtn').textContent = '保存配置';
+
+    document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+    document.getElementById('view-setup').classList.add('active');
+    document.getElementById('hud').style.display = 'none';
+    document.getElementById('bottomNav').style.display = 'none';
+  }
+
+  // ===== 数据管理 =====
+  function exportData() {
+    const dataStr = JSON.stringify(state, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'earth-online-data-' + getTodayStr() + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('数据已导出');
+  }
+
+  function clearAllData() {
+    if (!confirm('确定要清除所有数据吗？此操作不可恢复，包括角色进度、任务记录和API配置。')) return;
+    localStorage.removeItem(CONFIG.STORAGE_KEY);
+    state = getDefaultState();
+    location.reload();
+  }
+
+  // ===== 演示模式 =====
+  function startDemo() {
+    const today = getTodayStr();
+    const yesterday = (function() {
+      const d = new Date();
+      d.setDate(d.getDate() - 1);
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    })();
+    const twoDaysAgo = (function() {
+      const d = new Date();
+      d.setDate(d.getDate() - 2);
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    })();
+
+    state.profile = {
+      nickname: '演示玩家',
+      interests: ['摄影', '咖啡', '城市探索', '阅读'],
+      mainGoals: ['今年学会胶片摄影', '探索城市里的隐藏角落'],
+      apiKeys: { llm: { baseUrl: '', apiKey: 'DEMO_MODE', model: '' }, weather: { apiKey: '' }, map: { apiKey: '' } }
+    };
+    state.character = {
+      level: 3,
+      exp: 45,
+      attributes: { physical: 8, intellect: 12, charm: 5, courage: 7, creativity: 10 },
+      title: '城市漫游者',
+      achievements: ['first_step', 'ten_tasks'],
+      totalTasksCompleted: 12,
+      totalReflections: 8,
+      streakDays: 4,
+      lastActiveDate: yesterday
+    };
+    state.dailyTasks = {};
+    state.dailyTasks[today] = [
+      {
+        id: today + '_0', date: today, type: 'main',
+        title: '用手机拍一组「光影」主题照片',
+        description: '今天在通勤或散步时，留意光线穿过树叶、窗户或建筑缝隙的瞬间，用手机拍 10 张以光影为主题的照片，选出最喜欢的一张。',
+        completionCriteria: '拍摄至少 10 张光影主题照片，并选出一张最喜欢的',
+        estimatedMinutes: 30, difficulty: 'normal', expReward: 60,
+        attributeRewards: { physical: 0, intellect: 1, charm: 0, courage: 0, creativity: 3 },
+        status: 'pending', reflection: null
+      },
+      {
+        id: today + '_1', date: today, type: 'explore',
+        title: '探访一家从未去过的独立咖啡馆',
+        description: '在你日常活动范围 2 公里内，找一家从来没去过的独立咖啡馆（不是连锁品牌），点一杯单品，观察店里的装修和客人。',
+        completionCriteria: '到达一家新的独立咖啡馆，点单并停留至少 20 分钟',
+        estimatedMinutes: 45, difficulty: 'normal', expReward: 50,
+        attributeRewards: { physical: 1, intellect: 0, charm: 2, courage: 1, creativity: 1 },
+        status: 'pending', reflection: null
+      },
+      {
+        id: today + '_2', date: today, type: 'random',
+        title: '今天对 3 个陌生人微笑',
+        description: '在今天的日常活动中，有意识地对 3 个陌生人（便利店店员、路人、电梯里的邻居）给予一个真诚的微笑，观察他们的反应。',
+        completionCriteria: '对至少 3 个陌生人微笑，并留意他们的反应',
+        estimatedMinutes: 10, difficulty: 'easy', expReward: 20,
+        attributeRewards: { physical: 0, intellect: 0, charm: 2, courage: 1, creativity: 0 },
+        status: 'completed', completedAt: Date.now() - 3600000,
+        reflection: {
+          content: '今天对便利店店员、小区保安和电梯里的邻居微笑了。店员说了句"您慢走"，保安点了点头，邻居有点惊讶但也回了一个微笑。原来主动释放善意会得到回应，以后可以多试试。',
+          createdAt: Date.now() - 3500000,
+          aiKeywords: ['善意', '社交勇气', '正向反馈'],
+          aiMood: '温暖、愉悦'
+        }
+      }
+    ];
+    state.dailyTasks[yesterday] = [
+      {
+        id: yesterday + '_0', date: yesterday, type: 'explore',
+        title: '走一条从未走过的回家路线',
+        description: '下班或放学后，刻意选择一条与平时不同的路线回家，沿途记录 3 个之前没注意到的细节。',
+        completionCriteria: '选择新路线回家，记录 3 个新发现',
+        estimatedMinutes: 40, difficulty: 'normal', expReward: 50,
+        attributeRewards: { physical: 2, intellect: 1, charm: 0, courage: 1, creativity: 1 },
+        status: 'completed', completedAt: Date.now() - 90000000,
+        reflection: {
+          content: '换了一条路回家，发现了一家开在老小区里的旧书店，门口有只橘猫。还路过了一个社区花园，几个老人在种菜。原来每天错过的风景这么多。',
+          createdAt: Date.now() - 89900000,
+          aiKeywords: ['探索', '发现', '日常美学'],
+          aiMood: '惊喜、满足'
+        }
+      }
+    ];
+    state.dailyTasks[twoDaysAgo] = [
+      {
+        id: twoDaysAgo + '_0', date: twoDaysAgo, type: 'main',
+        title: '读完一本书的第一章并做笔记',
+        description: '选一本一直想读但没开始的书，读完第一章，写下 3 条感想或疑问。',
+        completionCriteria: '读完一章，写下 3 条笔记',
+        estimatedMinutes: 45, difficulty: 'normal', expReward: 55,
+        attributeRewards: { physical: 0, intellect: 3, charm: 0, courage: 0, creativity: 1 },
+        status: 'completed', completedAt: Date.now() - 180000000,
+        reflection: {
+          content: '终于翻开了《人类简史》，第一章讲认知革命。原来智人之所以能统治地球，是因为会讲故事和相信虚构的东西。这个观点很震撼。',
+          createdAt: Date.now() - 179900000,
+          aiKeywords: ['阅读', '认知', '思考'],
+          aiMood: '专注、启发'
+        }
+      }
+    ];
+    state.reflections = [
+      { taskId: yesterday + '_0', taskTitle: '走一条从未走过的回家路线', date: yesterday, content: '换了一条路回家，发现了一家开在老小区里的旧书店...', keywords: ['探索', '发现'] },
+      { taskId: twoDaysAgo + '_0', taskTitle: '读完一本书的第一章并做笔记', date: twoDaysAgo, content: '终于翻开了《人类简史》...', keywords: ['阅读', '认知'] }
+    ];
+    state.weather = { temp: '24', text: '多云' };
+    state.isDemo = true;
+    saveState();
+
+    document.getElementById('view-setup').classList.remove('active');
+    document.getElementById('hud').style.display = 'block';
+    document.getElementById('bottomNav').style.display = 'flex';
+    updateHUD();
+    document.getElementById('hudWeather').innerHTML = '<div class="hud-weather-temp">24&deg;C</div><div class="hud-weather-desc">多云（演示）</div>';
+    navigate('tasks');
+    showToast('已进入演示模式，数据为模拟数据');
+  }
+
+  // ===== 启动检查 =====
+  function checkInit() {
+    if (state.profile.nickname && state.profile.apiKeys.llm.apiKey) {
+      document.getElementById('view-setup').classList.remove('active');
+      document.getElementById('hud').style.display = 'block';
+      document.getElementById('bottomNav').style.display = 'flex';
+      updateHUD();
+      loadWeather();
+      navigate('tasks');
+    }
+  }
+
+  // ===== 暴露公共 API =====
+  window.App = {
+    navigate: navigate,
+    completeSetup: completeSetup,
+    testLlm: testLlm,
+    generateDailyTasks: generateDailyTasks,
+    regenerateTasks: regenerateTasks,
+    openTaskDetail: openTaskDetail,
+    completeTask: completeTask,
+    showApiEdit: showApiEdit,
+    exportData: exportData,
+    clearAllData: clearAllData,
+    startDemo: startDemo
+  };
+
+  // 启动
+  checkInit();
+})();
+</script>
+</body>
+</html>
